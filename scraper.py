@@ -2,6 +2,7 @@
 
 import urllib
 import urllib2
+import pprint
 
 def get_aspx_fields(page):
 	fields = {}
@@ -13,8 +14,9 @@ def get_aspx_fields(page):
 	fields["__EVENTVALIDATION"] = page[start:end]
 	return fields
 
-def halte_info(lsn, h, r):
-	page = urllib2.urlopen("http://www.connexxion.nl/dashboard/Halteinfo.aspx?lsn=%s&r=%s&h=%s"%(lsn, h, r)).read()
+def get_stops_one_way(lsn, h, r):
+	url = "http://www.connexxion.nl/dashboard/Halteinfo.aspx?lsn=%s&r=%s&pr=20101212_20111210&h=%s" % (lsn, r, h)
+	page = urllib2.urlopen(url).read()
 	# Haal alle haltes op van deze pagina's
 	page = page[page.find("<table id=\"dienstregeling\""):]
 	page = page[:page.find("</table>")]
@@ -24,6 +26,11 @@ def halte_info(lsn, h, r):
 		haltes.append(h[:h.find("\"")])
 	return haltes
 
+def get_stops(lsn, h):
+	a = get_stops_one_way(lsn, h, 1)
+	b = get_stops_one_way(lsn, h, 2)
+	a.reverse()
+	return a + [h] + b
 
 
 def get_lines(h):
@@ -52,7 +59,6 @@ def get_lines(h):
 	end_select = page.find('</select>', start_select)
 	options = page[start_select:end_select]
 	lines = {}
-	print options
 	while True:
 		start = options.find("value=\"") + 7
 		if start == 6: break # -1 + 7 == 6
@@ -69,6 +75,9 @@ def get_lines(h):
 
 
 if __name__ == "__main__":
-	print get_lines("37323930")
-
+	h = "37323930"
+	print "=== lines on %s ===" % (h)
+	pprint.pprint(get_lines("37323930"))
+	print "=== Stops on line N069 ==="
+	pprint.pprint(get_stops("N069", "37323930"))
 
